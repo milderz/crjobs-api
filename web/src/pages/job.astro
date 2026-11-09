@@ -10,7 +10,7 @@ import Base from '../layouts/Base.astro';
 </Base>
 
 <script>
-  const API = import.meta.env.PUBLIC_API_URL || 'https://crjobs-api.onrender.com';
+  const API = import.meta.env.PUBLIC_API_URL || '';
   const params = new URLSearchParams(window.location.search);
   const portal = params.get('portal');
   const id = params.get('id');

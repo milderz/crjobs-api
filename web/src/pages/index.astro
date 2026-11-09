@@ -39,7 +39,7 @@ import Base from '../layouts/Base.astro';
 </Base>
 
 <script>
-  const API = import.meta.env.PUBLIC_API_URL || 'https://crjobs-api.onrender.com';
+  const API = import.meta.env.PUBLIC_API_URL || '';
   const PAGE_SIZE = 50;
 
   const jobsEl = document.getElementById('jobs')!;
