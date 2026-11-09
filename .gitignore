@@ -4,3 +4,5 @@ node_modules/
 jobs.db
 jobs.db-wal
 jobs.db-shm
+web/dist/
+web/.astro/
