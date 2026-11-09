@@ -1,0 +1,129 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="Find your next job">
+  <section class="hero">
+    <h1>Jobs across Costa Rica</h1>
+    <p>Aggregated daily from multiple job portals</p>
+  </section>
+
+  <form class="filters" id="filters">
+    <input type="search" id="q" placeholder="Search title, company…" aria-label="Search jobs" />
+    <select id="portal" aria-label="Portal">
+      <option value="">All portals</option>
+      <option value="amazon">Amazon</option>
+      <option value="hpe">HPE</option>
+    </select>
+    <input type="text" id="location" placeholder="Location (e.g. costa-rica)" value="costa-rica" aria-label="Location" />
+    <button type="submit">Search</button>
+  </form>
+
+  <div id="status" class="state" hidden>
+    <div class="spinner"></div>
+    <p>Loading jobs…</p>
+  </div>
+
+  <div id="error" class="state" hidden>
+    <p>Could not load jobs. The API may be waking up — try again in a moment.</p>
+    <button class="filters button" id="retry" type="button">Retry</button>
+  </div>
+
+  <div id="empty" class="state" hidden>
+    <p>No jobs found. Try different filters or check back after the next scrape.</p>
+  </div>
+
+  <div class="jobs-grid" id="jobs"></div>
+
+  <button class="load-more" id="loadMore" hidden>Load more</button>
+</Base>
+
+<script>
+  const API = import.meta.env.PUBLIC_API_URL || 'https://crjobs-api.onrender.com';
+  const PAGE_SIZE = 50;
+
+  const jobsEl = document.getElementById('jobs')!;
+  const statusEl = document.getElementById('status')!;
+  const errorEl = document.getElementById('error')!;
+  const emptyEl = document.getElementById('empty')!;
+  const loadMoreBtn = document.getElementById('loadMore')!;
+  const form = document.getElementById('filters') as HTMLFormElement;
+
+  let offset = 0;
+  let total = 0;
+  let loading = false;
+
+  function escapeHtml(str: string) {
+    return str.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
+  }
+
+  function jobCard(job: any) {
+    const summary = job.summary || job.description || '';
+    const detailUrl = `/job?portal=${encodeURIComponent(job.portal)}&id=${encodeURIComponent(job.id || job.link)}`;
+    return `
+      <article class="job-card">
+        <div class="meta">
+          <span class="badge portal">${escapeHtml(job.portal)}</span>
+          ${job.company ? `<span class="badge">${escapeHtml(job.company)}</span>` : ''}
+          ${job.location ? `<span>📍 ${escapeHtml(job.location)}</span>` : ''}
+        </div>
+        <h3><a href="${detailUrl}">${escapeHtml(job.title)}</a></h3>
+        ${summary ? `<p class="summary">${escapeHtml(summary)}</p>` : ''}
+        <div class="card-footer">
+          <a href="${job.link}" target="_blank" rel="noopener">View original ↗</a>
+          <a href="${detailUrl}">Details →</a>
+        </div>
+      </article>`;
+  }
+
+  async function fetchJobs(append = false) {
+    if (loading) return;
+    loading = true;
+    statusEl.hidden = false;
+    errorEl.hidden = true;
+
+    const params = new URLSearchParams({
+      limit: String(PAGE_SIZE),
+      offset: String(append ? offset : 0),
+    });
+    const q = (document.getElementById('q') as HTMLInputElement).value.trim();
+    const portal = (document.getElementById('portal') as HTMLSelectElement).value;
+    const location = (document.getElementById('location') as HTMLInputElement).value.trim();
+    if (q) params.set('q', q);
+    if (portal) params.set('portals', portal);
+    if (location) params.set('location', location);
+
+    try {
+      const res = await fetch(`${API}/api/jobs?${params}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      if (!append) {
+        jobsEl.innerHTML = '';
+        offset = 0;
+        total = data.total || 0;
+      }
+
+      jobsEl.insertAdjacentHTML('beforeend', data.jobs.map(jobCard).join(''));
+      offset += data.jobs.length;
+
+      emptyEl.hidden = data.jobs.length > 0 || offset > 0;
+      loadMoreBtn.hidden = offset >= total;
+    } catch {
+      errorEl.hidden = false;
+    } finally {
+      statusEl.hidden = true;
+      loading = false;
+    }
+  }
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    fetchJobs(false);
+  });
+
+  loadMoreBtn.addEventListener('click', () => fetchJobs(true));
+  document.getElementById('retry')!.addEventListener('click', () => fetchJobs(false));
+
+  fetchJobs(false);
+</script>

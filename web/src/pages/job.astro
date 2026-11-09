@@ -1,0 +1,56 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="Job detail" description="Job posting details">
+  <div class="detail" id="detail">
+    <a href="/" class="back-link">← Back to jobs</a>
+    <div class="state"><div class="spinner"></div><p>Loading job…</p></div>
+  </div>
+</Base>
+
+<script>
+  const API = import.meta.env.PUBLIC_API_URL || 'https://crjobs-api.onrender.com';
+  const params = new URLSearchParams(window.location.search);
+  const portal = params.get('portal');
+  const id = params.get('id');
+  const container = document.getElementById('detail')!;
+
+  function escapeHtml(str: string) {
+    return str.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
+  }
+
+  async function load() {
+    if (!portal || !id) {
+      container.innerHTML = '<div class="state"><p>Missing portal or job id. <a href="/">Back to jobs</a></p></div>';
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API}/api/jobs/${encodeURIComponent(portal)}/${encodeURIComponent(id)}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const job = data.job;
+
+      const description = job.description || job.summary || 'No description available.';
+      container.innerHTML = `
+        <span class="badge portal">${escapeHtml(data.portal || portal)}</span>
+        <h1>${escapeHtml(job.title || 'Untitled')}</h1>
+        <div class="meta">
+          ${job.company ? `<span class="badge">${escapeHtml(job.company)}</span>` : ''}
+          ${job.location ? `<span class="badge">📍 ${escapeHtml(job.location)}</span>` : ''}
+          ${job.category ? `<span class="badge">${escapeHtml(job.category)}</span>` : ''}
+        </div>
+        <p><a href="${job.link}" target="_blank" rel="noopener">View original posting ↗</a></p>
+        <div class="description">${escapeHtml(description)}</div>
+      `;
+    } catch {
+      container.innerHTML = `
+        <a href="/" class="back-link">← Back to jobs</a>
+        <div class="state"><p>Could not load this job. It may have expired or the API is unavailable.</p></div>
+      `;
+    }
+  }
+
+  load();
+</script>
