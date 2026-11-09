@@ -11,9 +11,9 @@ adminRouter.post('/scrape', (req, res) => {
   }
   const { location, maxItems, withDetails } = req.body || {};
   runScrape({
-    location: location || 'costa-rica',
-    maxItems: maxItems || 200,
-    withDetails: withDetails !== false,
+    location: location || process.env.SCRAPE_LOCATION || 'costa-rica',
+    maxItems: maxItems || parseInt(process.env.SCRAPE_MAX_ITEMS, 10) || 200,
+    withDetails: withDetails !== undefined ? withDetails !== false : process.env.SCRAPE_WITH_DETAILS !== 'false',
   });
   res.status(202).json({ status: 'started', message: 'Scrape running in background' });
 });

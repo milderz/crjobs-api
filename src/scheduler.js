@@ -19,7 +19,8 @@ export function startScheduler() {
   console.log(`[scheduler] daily scrape scheduled: ${CRON_SCHEDULE} (${process.env.SCRAPE_TIMEZONE || 'America/Costa_Rica'})`);
 
   // First boot with empty DB → scrape immediately in the background
-  if (countJobs() === 0) {
+  // Set INITIAL_SCRAPE=false to skip (server starts fast, scrape via cron or POST /api/admin/scrape)
+  if (process.env.INITIAL_SCRAPE !== 'false' && countJobs() === 0) {
     console.log('[scheduler] database empty, starting initial scrape');
     runScrape({ location: LOCATION, maxItems: MAX_ITEMS, withDetails: WITH_DETAILS });
   }
