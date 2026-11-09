@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import { jobsRouter } from './routes/jobs.js';
 import { adminRouter } from './routes/admin.js';
 import { scrapeRouter } from './routes/scrape.js';
@@ -7,6 +8,7 @@ import { startScheduler } from './scheduler.js';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.use(cors());
 app.use(express.json({ limit: '1mb' }));
 
 app.get('/api/health', (req, res) => {

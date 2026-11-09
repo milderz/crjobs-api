@@ -42,6 +42,11 @@ import Base from '../layouts/Base.astro';
   const API = import.meta.env.PUBLIC_API_URL || '';
   const PAGE_SIZE = 50;
 
+  const PORTAL_LOGOS = {
+    amazon: 'https://media.licdn.com/dms/image/v2/D560BAQGDLy4STCnHbg/company-logo_100_100/B56ZnZxDipI0AQ-/0/1760295142304/amazon_logo?e=1795651200&v=beta&t=s9YKTQS8x-hJZxuImc4tfp8fif8XkYraIhOw_CBqalE',
+    hpe: 'https://media.licdn.com/dms/image/v2/D4E0BAQGDnmjOQlmgtg/company-logo_200_200/B4EZdk_QyCHsAM-/0/1749745995186/aruba_a_hewlett_packard_enterprise_company_logo?e=1795651200&v=beta&t=YR77yKOziJU51xmdMq3oilw03BkCcAR5KIzl_Y8vifc',
+  };
+
   const jobsEl = document.getElementById('jobs')!;
   const statusEl = document.getElementById('status')!;
   const errorEl = document.getElementById('error')!;
@@ -60,11 +65,12 @@ import Base from '../layouts/Base.astro';
   function jobCard(job: any) {
     const summary = job.summary || job.description || '';
     const detailUrl = `/job?portal=${encodeURIComponent(job.portal)}&id=${encodeURIComponent(job.id || job.link)}`;
+    const logo = PORTAL_LOGOS[job.portal as keyof typeof PORTAL_LOGOS];
     return `
       <article class="job-card">
         <div class="meta">
           <span class="badge portal">${escapeHtml(job.portal)}</span>
-          ${job.company ? `<span class="badge">${escapeHtml(job.company)}</span>` : ''}
+          ${logo ? `<img class="job-logo" src="${logo}" alt="${escapeHtml(job.company || job.portal)}" loading="lazy" />` : (job.company ? `<span class="badge">${escapeHtml(job.company)}</span>` : '')}
           ${job.location ? `<span>📍 ${escapeHtml(job.location)}</span>` : ''}
         </div>
         <h3><a href="${detailUrl}">${escapeHtml(job.title)}</a></h3>
