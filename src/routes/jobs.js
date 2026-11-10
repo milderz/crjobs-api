@@ -198,10 +198,13 @@ jobsRouter.get('/:portal/:jobId', getPortal, async (req, res, next) => {
     const live = req.query.live === 'true';
 
     if (!live) {
-      // Extract numeric ID if a full URL was passed
-      const idMatch = jobRef.match(/(\d{5,})/);
-      const jobId = idMatch ? idMatch[1] : jobRef;
-      const job = getJob(req.portalKey, jobId);
+      // Try exact ID first (e.g. Accenture guid "R00360211_en"),
+      // then fall back to extracting a numeric ID from a full URL.
+      let job = getJob(req.portalKey, jobRef);
+      if (!job) {
+        const idMatch = jobRef.match(/(\d{5,})/);
+        if (idMatch) job = getJob(req.portalKey, idMatch[1]);
+      }
       if (!job) return res.status(404).json({ error: 'Job not found', jobRef });
       return res.json({
         source: req.portal.name,
