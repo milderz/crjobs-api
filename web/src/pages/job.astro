@@ -41,7 +41,7 @@ import Base from '../layouts/Base.astro';
           ${job.category ? `<span class="badge">${escapeHtml(job.category)}</span>` : ''}
           ${job.location ? `<span class="badge">📍 ${escapeHtml(job.location)}</span>` : ''}
         </div>
-        <p><a href="${job.link}" target="_blank" rel="noopener">View original posting ↗</a></p>
+        <p><a href="${job.link || job.url}" target="_blank" rel="noopener">View original posting ↗</a></p>
         <div class="description">${escapeHtml(description)}</div>
       `;
     } catch {

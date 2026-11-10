@@ -2,7 +2,7 @@ import { PORTALS } from './portals.js';
 import { saveJobs, startRun, endRun, countJobs } from './db.js';
 import { closeBrowser } from './browser.js';
 
-const DETAIL_CONCURRENCY = 4;
+const DETAIL_CONCURRENCY = parseInt(process.env.SCRAPE_DETAIL_CONCURRENCY, 10) || 4;
 
 let running = false;
 let lastResult = null;
