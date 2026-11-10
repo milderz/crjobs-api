@@ -90,9 +90,9 @@ nav a:hover { color: var(--text); text-decoration: none; }
 .filters input:focus, .filters select:focus { border-color: var(--accent); }
 .filters input[type="search"] { flex: 1; min-width: 200px; }
 .filters button {
-  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  background: var(--accent);
   border: none;
-  color: #0f172a;
+  color: var(--surface);
   font-weight: 600;
   border-radius: 8px;
   padding: 0.6rem 1.2rem;
@@ -132,11 +132,12 @@ nav a:hover { color: var(--text); text-decoration: none; }
 }
 .badge.portal { color: var(--text); border-color: var(--accent); }
 .job-logo {
-  width: 28px;
-  height: 28px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   object-fit: cover;
-  border: 1px solid var(--border);
+  border: 2px solid var(--accent);
+  box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--border);
   background: #fff;
 }
 .job-card .summary {
@@ -147,6 +148,41 @@ nav a:hover { color: var(--text); text-decoration: none; }
   -webkit-box-orient: clamp;
   overflow: hidden;
 }
+.job-card .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.job-card .card-submeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.job-card .company-name { font-weight: 600; color: var(--text); }
+.save-btn {
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  cursor: pointer;
+  color: var(--muted);
+  padding: 0.25rem;
+  line-height: 1;
+}
+.save-btn:hover { color: var(--accent); }
+.save-btn.saved { color: #e11d48; }
+.job-card .card-footer .location { font-size: 0.8rem; color: var(--muted); }
+.btn {
+  background: var(--accent);
+  color: #fff;
+  border-radius: 8px;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.btn:hover { opacity: 0.9; text-decoration: none; }
 .job-card .card-footer {
   margin-top: auto;
   padding-top: 0.75rem;

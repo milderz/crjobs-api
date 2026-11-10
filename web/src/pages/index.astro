@@ -62,22 +62,39 @@ import Base from '../layouts/Base.astro';
     return str.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
   }
 
+  const SAVED_KEY = 'savedJobs';
+  function getSaved(): Set<string> {
+    try { return new Set(JSON.parse(localStorage.getItem(SAVED_KEY) || '[]')); }
+    catch { return new Set(); }
+  }
+  function toggleSaved(key: string) {
+    const saved = getSaved();
+    saved.has(key) ? saved.delete(key) : saved.add(key);
+    localStorage.setItem(SAVED_KEY, JSON.stringify([...saved]));
+  }
+
   function jobCard(job: any) {
     const summary = job.summary || job.description || '';
     const detailUrl = `/job?portal=${encodeURIComponent(job.portal)}&id=${encodeURIComponent(job.id || job.link)}`;
     const logo = PORTAL_LOGOS[job.portal as keyof typeof PORTAL_LOGOS];
+    const key = `${job.portal}:${job.id}`;
+    const saved = getSaved().has(key) ? 'saved' : '';
+    const posted = job.scrapedAt ? new Date(job.scrapedAt).toLocaleDateString() : '';
     return `
       <article class="job-card">
-        <div class="meta">
-          <span class="badge portal">${escapeHtml(job.portal)}</span>
-          ${logo ? `<img class="job-logo" src="${logo}" alt="${escapeHtml(job.company || job.portal)}" loading="lazy" />` : (job.company ? `<span class="badge">${escapeHtml(job.company)}</span>` : '')}
-          ${job.location ? `<span>📍 ${escapeHtml(job.location)}</span>` : ''}
+        <div class="card-header">
+          ${logo ? `<img class="job-logo" src="${logo}" alt="${escapeHtml(job.company || job.portal)}" loading="lazy" />` : ''}
+          <button class="save-btn ${saved}" data-key="${escapeHtml(key)}" aria-label="Save job" title="Save job">♡</button>
+        </div>
+        <div class="card-submeta">
+          <span class="company-name">${escapeHtml(job.company || job.portal)}</span>
+          ${posted ? `<span class="posted">Posted ${posted}</span>` : ''}
         </div>
         <h3><a href="${detailUrl}">${escapeHtml(job.title)}</a></h3>
         ${summary ? `<p class="summary">${escapeHtml(summary)}</p>` : ''}
         <div class="card-footer">
-          <a href="${job.link}" target="_blank" rel="noopener">View original ↗</a>
-          <a href="${detailUrl}">Details →</a>
+          ${job.location ? `<span class="location">📍 ${escapeHtml(job.location)}</span>` : '<span></span>'}
+          <a class="btn" href="${job.link}" target="_blank" rel="noopener">See offer ↗</a>
         </div>
       </article>`;
   }
@@ -130,6 +147,15 @@ import Base from '../layouts/Base.astro';
 
   loadMoreBtn.addEventListener('click', () => fetchJobs(true));
   document.getElementById('retry')!.addEventListener('click', () => fetchJobs(false));
+
+  jobsEl.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest('.save-btn') as HTMLButtonElement | null;
+    if (!btn) return;
+    const key = btn.dataset.key!;
+    toggleSaved(key);
+    btn.classList.toggle('saved');
+    btn.textContent = btn.classList.contains('saved') ? '♥' : '♡';
+  });
 
   fetchJobs(false);
 </script>
