@@ -14,4 +14,9 @@ export const PORTALS = {
     listJobs: scrapeHpeJobs,
     getJobDetails: getHpeJobDetails,
   },
+  accenture: {
+    name: 'Accenture Careers',
+    listJobs: scrapeAccentureJobs,
+    getJobDetails: getAccentureJobDetails,
+  },
 };
