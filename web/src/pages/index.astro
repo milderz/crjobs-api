@@ -74,7 +74,8 @@ import Base from '../layouts/Base.astro';
   }
 
   function jobCard(job: any) {
-    const summary = job.summary || job.description || '';
+    const raw = (job.summary || job.description || '').replace(/\s+/g, ' ').trim();
+    const summary = raw.length > 220 ? raw.slice(0, 220).replace(/\s+\S*$/, '') + '…' : raw;
     const detailUrl = `/job?portal=${encodeURIComponent(job.portal)}&id=${encodeURIComponent(job.id || job.link)}`;
     const logo = PORTAL_LOGOS[job.portal as keyof typeof PORTAL_LOGOS];
     const key = `${job.portal}:${job.id}`;

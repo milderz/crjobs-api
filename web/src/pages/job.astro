@@ -11,6 +11,10 @@ import Base from '../layouts/Base.astro';
 
 <script>
   const API = import.meta.env.PUBLIC_API_URL || '';
+  const PORTAL_LOGOS = {
+    amazon: '/amazon_logo.jfif',
+    hpe: '/hpe.jfif',
+  };
   const params = new URLSearchParams(window.location.search);
   const portal = params.get('portal');
   const id = params.get('id');
@@ -31,19 +35,64 @@ import Base from '../layouts/Base.astro';
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       const job = data.job;
+      const d = job.details || {};
 
       const description = job.description || job.summary || 'No description available.';
+      const sections = [
+        ['Description', description],
+        ['Basic Qualifications', d.basicQualifications],
+        ['Preferred Qualifications', d.preferredQualifications],
+      ].filter(([, text]) => text);
+
+      const company = job.company || d.company || '';
+      const location = job.location || d.location || '';
+      const category = job.category || d.category || '';
+      const employmentType = job.employmentType || d.employmentType || '';
+      const postedDate = job.scrapedAt || job.first_seen || job.firstSeen;
+      const posted = postedDate
+        ? new Date(postedDate).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
+        : '';
+      const logo = PORTAL_LOGOS[portal as keyof typeof PORTAL_LOGOS];
+
+      const metaParts = [location, employmentType, category].filter(Boolean);
+
       container.innerHTML = `
-        <span class="badge portal">${escapeHtml(data.portal || portal)}</span>
-        <h1>${escapeHtml(job.title || 'Untitled')}</h1>
-        <div class="meta">
-          ${job.company ? `<span class="badge">${escapeHtml(job.company)}</span>` : ''}
-          ${job.category ? `<span class="badge">${escapeHtml(job.category)}</span>` : ''}
-          ${job.location ? `<span class="badge">📍 ${escapeHtml(job.location)}</span>` : ''}
+        <div class="job-hero">
+          <div class="job-hero-top">
+            ${logo ? `<img class="job-hero-logo" src="${logo}" alt="${escapeHtml(company || portal)}" />` : ''}
+            <div class="job-hero-company">
+              <div class="job-hero-company-name">${escapeHtml(company || portal)}</div>
+              ${posted ? `<div class="job-hero-posted">Posted ${escapeHtml(posted)}</div>` : ''}
+            </div>
+          </div>
+          <h1 class="job-hero-title">${escapeHtml(job.title || d.title || 'Untitled')}</h1>
+          ${metaParts.length ? `<div class="job-hero-meta">${metaParts.map(escapeHtml).join(' <span class="job-hero-pipe">|</span> ')}</div>` : ''}
+          <a class="apply-btn" href="${job.link || job.url || d.url}" target="_blank" rel="noopener">Aplicar a este empleo</a>
         </div>
-        <p><a href="${job.link || job.url}" target="_blank" rel="noopener">View original posting ↗</a></p>
-        <div class="description">${escapeHtml(description)}</div>
+        <p class="apply-link"><a href="${job.link || job.url || d.url}" target="_blank" rel="noopener">View original posting ↗</a></p>
+        <div class="description">
+          ${sections.map(([heading, text]) => `
+            <h2 class="section-title">${escapeHtml(heading)}</h2>
+            <div class="section-body">${escapeHtml(text).replace(/\n/g, '<br>')}</div>
+          `).join('')}
+        </div>
+        <div class="newsletter">
+          <div class="newsletter-text">
+            <h3>📬 No te pierdas nuevas ofertas</h3>
+            <p>Recibe los mejores empleos de Costa Rica directamente en tu correo.</p>
+          </div>
+          <form class="newsletter-form" id="newsletterForm">
+            <input type="email" placeholder="tu@correo.com" required />
+            <button type="submit">Suscribirme</button>
+          </form>
+        </div>
       `;
+
+      document.getElementById('newsletterForm')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const btn = (e.target as HTMLFormElement).querySelector('button');
+        if (btn) { btn.textContent = '¡Listo! ✓'; btn.disabled = true; }
+      });
     } catch {
       container.innerHTML = `
         <a href="/" class="back-link">← Back to jobs</a>
