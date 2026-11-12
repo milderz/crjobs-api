@@ -4,38 +4,39 @@ import Base from '../layouts/Base.astro';
 
 <Base title="Find your next job">
   <section class="hero">
-    <h1>Jobs across Costa Rica</h1>
-    <p>Aggregated daily from multiple job portals</p>
+    <h1>Empleos en Costa Rica</h1>
+    <p>Agregados diariamente desde varios portales de empleo</p>
   </section>
 
   <form class="filters" id="filters">
-    <input type="search" id="q" placeholder="Search title, company…" aria-label="Search jobs" />
-    <select id="portal" aria-label="Portal">
-      <option value="">All portals</option>
+    <input type="search" id="q" placeholder="Buscar puesto o empresa" aria-label="Buscar trabajos" />
+    <select id="portal" aria-label="Empresa">
+      <option value="">Empresas</option>
       <option value="amazon">Amazon</option>
       <option value="hpe">HPE</option>
+      <option value="accenture">Accenture</option>
     </select>
-    <input type="text" id="location" placeholder="Location (optional)" aria-label="Location" />
-    <button type="submit">Search</button>
+    <input type="text" id="location" placeholder="Ubicación" aria-label="Ubicación" />
+    <button type="submit">Buscar</button>
   </form>
 
   <div id="status" class="state" hidden>
     <div class="spinner"></div>
-    <p>Loading jobs…</p>
+    <p>Cargando empleos…</p>
   </div>
 
   <div id="error" class="state" hidden>
-    <p>Could not load jobs. The API may be waking up — try again in a moment.</p>
-    <button class="filters button" id="retry" type="button">Retry</button>
+    <p>No se pudieron cargar los empleos. La API puede estar iniciando — intenta de nuevo en un momento.</p>
+    <button class="filters button" id="retry" type="button">Reintentar</button>
   </div>
 
   <div id="empty" class="state" hidden>
-    <p>No jobs found. Try different filters or check back after the next scrape.</p>
+    <p>No se encontraron empleos. Prueba con otros filtros o vuelve después del próximo rastreo.</p>
   </div>
 
   <div class="jobs-grid" id="jobs"></div>
 
-  <button class="load-more" id="loadMore" hidden>Load more</button>
+  <button class="load-more" id="loadMore" hidden>Cargar más</button>
 </Base>
 
 <script>
@@ -86,17 +87,17 @@ import Base from '../layouts/Base.astro';
       <article class="job-card">
         <div class="card-header">
           ${logo ? `<img class="job-logo" src="${logo}" alt="${escapeHtml(job.company || job.portal)}" loading="lazy" />` : ''}
-          <button class="save-btn ${saved}" data-key="${escapeHtml(key)}" aria-label="Save job" title="Save job">♡</button>
+          <button class="save-btn ${saved}" data-key="${escapeHtml(key)}" aria-label="Guardar empleo" title="Guardar empleo">♡</button>
         </div>
         <div class="card-submeta">
           <span class="company-name">${escapeHtml(job.company || job.portal)}</span>
-          ${posted ? `<span class="posted">Posted ${posted}</span>` : ''}
+          ${posted ? `<span class="posted">Publicado ${posted}</span>` : ''}
         </div>
         <h3><a href="${detailUrl}">${escapeHtml(job.title)}</a></h3>
         ${summary ? `<p class="summary">${escapeHtml(summary)}</p>` : ''}
         <div class="card-footer">
           ${job.location ? `<span class="location">📍 ${escapeHtml(job.location)}</span>` : '<span></span>'}
-          <a class="btn" href="${job.link}" target="_blank" rel="noopener">See offer ↗</a>
+          <a class="btn" href="${job.link}" target="_blank" rel="noopener">Ver oferta ↗</a>
         </div>
       </article>`;
   }
