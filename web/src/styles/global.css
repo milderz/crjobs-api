@@ -266,6 +266,19 @@ nav a:hover { color: var(--text); text-decoration: none; }
   margin: 0 0.55rem;
   opacity: 0.6;
 }
+.detail.company-page { padding-bottom: 0; }
+.detail .job-hero-about {
+  margin: 0.9rem 0 0;
+  max-width: 62ch;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  opacity: 0.92;
+}
+.company-jobs-title {
+  margin: 0.25rem 0 0;
+  font-size: 1.35rem;
+  letter-spacing: -0.02em;
+}
 .detail .job-hero .apply-btn {
   display: inline-block;
   margin-top: 1.5rem;
