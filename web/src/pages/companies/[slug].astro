@@ -1,0 +1,224 @@
+---
+import Base from '../../layouts/Base.astro';
+
+export function getStaticPaths() {
+  const companies = [
+    {
+      slug: 'amazon',
+      name: 'Amazon',
+      logo: '/amazon_logo.jfif',
+      tagline: 'Tecnología, comercio y nube desde Costa Rica',
+      about:
+        'Amazon diseña productos, servicios en la nube y operaciones logísticas a escala global. Esta ficha es un marcador de posición hasta publicar la información oficial de la empresa.',
+      industry: 'Comercio electrónico y nube',
+      location: 'Heredia, Costa Rica',
+      size: '1,500,000+ empleados',
+    },
+    {
+      slug: 'hpe',
+      name: 'Hewlett Packard Enterprise',
+      logo: '/hpe.jfif',
+      tagline: 'Infraestructura y servicios para la empresa',
+      about:
+        'HPE construye cómputo, almacenamiento y software para centros de datos y la nube híbrida. Esta ficha es un marcador de posición hasta publicar la información oficial de la empresa.',
+      industry: 'Infraestructura tecnológica',
+      location: 'San José, Costa Rica',
+      size: '60,000+ empleados',
+    },
+    {
+      slug: 'accenture',
+      name: 'Accenture',
+      logo: '/accenture_logo.jfif',
+      tagline: 'Consultoría y servicios digitales',
+      about:
+        'Accenture acompaña a organizaciones en estrategia, tecnología y operaciones. Esta ficha es un marcador de posición hasta publicar la información oficial de la empresa.',
+      industry: 'Consultoría y tecnología',
+      location: 'San José, Costa Rica',
+      size: '700,000+ empleados',
+    },
+  ];
+
+  return companies.map((company) => ({
+    params: { slug: company.slug },
+    props: { company },
+  }));
+}
+
+const { company } = Astro.props;
+const meta = [company.industry, company.location, company.size];
+---
+
+<Base title={company.name} description={`Empleos de ${company.name} en Costa Rica`}>
+  <div class="detail company-page">
+    <a href="/" class="back-link">← Todos los empleos</a>
+    <div class="job-hero">
+      <div class="job-hero-top">
+        <img class="job-hero-logo" src={company.logo} alt={company.name} />
+        <div class="job-hero-company">
+          <div class="job-hero-company-name">{company.name}</div>
+          <div class="job-hero-posted">{company.industry}</div>
+        </div>
+      </div>
+      <h1 class="job-hero-title">{company.tagline}</h1>
+      <div class="job-hero-meta">
+        {meta.map((part, i) => (
+          <>
+            {i > 0 && <span class="job-hero-pipe">|</span>}
+            {part}
+          </>
+        ))}
+      </div>
+      <p class="job-hero-about">{company.about}</p>
+    </div>
+  </div>
+
+  <h2 class="company-jobs-title">Empleos en {company.name}</h2>
+
+  <form class="filters" id="filters">
+    <input type="search" id="q" placeholder="Buscar puesto" aria-label="Buscar trabajos" />
+    <input type="text" id="location" placeholder="Ubicación" aria-label="Ubicación" />
+    <button type="submit">Buscar</button>
+  </form>
+
+  <div id="status" class="state" hidden>
+    <div class="spinner"></div>
+    <p>Cargando empleos…</p>
+  </div>
+
+  <div id="error" class="state" hidden>
+    <p>No se pudieron cargar los empleos. La API puede estar iniciando — intenta de nuevo en un momento.</p>
+    <button class="filters button" id="retry" type="button">Reintentar</button>
+  </div>
+
+  <div id="empty" class="state" hidden>
+    <p>No hay empleos de {company.name} con esos filtros.</p>
+  </div>
+
+  <div class="jobs-grid" id="jobs" data-portal={company.slug}></div>
+
+  <button class="load-more" id="loadMore" hidden>Cargar más</button>
+</Base>
+
+<script>
+  const API = import.meta.env.PUBLIC_API_URL || '';
+  const PAGE_SIZE = 50;
+
+  const PORTAL_LOGOS: Record<string, string> = {
+    amazon: '/amazon_logo.jfif',
+    hpe: '/hpe.jfif',
+    accenture: '/accenture_logo.jfif',
+  };
+
+  const jobsEl = document.getElementById('jobs')!;
+  const portal = jobsEl.dataset.portal!;
+  const statusEl = document.getElementById('status')!;
+  const errorEl = document.getElementById('error')!;
+  const emptyEl = document.getElementById('empty')!;
+  const loadMoreBtn = document.getElementById('loadMore')!;
+  const form = document.getElementById('filters') as HTMLFormElement;
+
+  let offset = 0;
+  let total = 0;
+  let loading = false;
+
+  function escapeHtml(str: string) {
+    return str.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
+  }
+
+  const SAVED_KEY = 'savedJobs';
+  function getSaved(): Set<string> {
+    try { return new Set(JSON.parse(localStorage.getItem(SAVED_KEY) || '[]')); }
+    catch { return new Set(); }
+  }
+  function toggleSaved(key: string) {
+    const saved = getSaved();
+    saved.has(key) ? saved.delete(key) : saved.add(key);
+    localStorage.setItem(SAVED_KEY, JSON.stringify([...saved]));
+  }
+
+  function jobCard(job: any) {
+    const raw = (job.summary || job.description || '').replace(/\s+/g, ' ').trim();
+    const summary = raw.length > 220 ? raw.slice(0, 220).replace(/\s+\S*$/, '') + '…' : raw;
+    const detailUrl = `/job?portal=${encodeURIComponent(job.portal)}&id=${encodeURIComponent(job.id || job.link)}`;
+    const logo = PORTAL_LOGOS[job.portal];
+    const key = `${job.portal}:${job.id}`;
+    const saved = getSaved().has(key) ? 'saved' : '';
+    const posted = job.scrapedAt ? new Date(job.scrapedAt).toLocaleDateString() : '';
+    return `
+      <article class="job-card">
+        <div class="card-header">
+          ${logo ? `<img class="job-logo" src="${logo}" alt="${escapeHtml(job.company || job.portal)}" loading="lazy" />` : ''}
+          <button class="save-btn ${saved}" data-key="${escapeHtml(key)}" aria-label="Guardar empleo" title="Guardar empleo">♡</button>
+        </div>
+        <div class="card-submeta">
+          <a class="company-name" href="/companies/${encodeURIComponent(job.portal)}">${escapeHtml(job.company || job.portal)}</a>
+          ${posted ? `<span class="posted">Publicado ${posted}</span>` : ''}
+        </div>
+        <h3><a href="${detailUrl}">${escapeHtml(job.title)}</a></h3>
+        ${summary ? `<p class="summary">${escapeHtml(summary)}</p>` : ''}
+        <div class="card-footer">
+          ${job.location ? `<span class="location">📍 ${escapeHtml(job.location)}</span>` : '<span></span>'}
+          <a class="btn" href="${job.link}" target="_blank" rel="noopener">Ver oferta ↗</a>
+        </div>
+      </article>`;
+  }
+
+  async function fetchJobs(append = false) {
+    if (loading) return;
+    loading = true;
+    statusEl.hidden = false;
+    errorEl.hidden = true;
+
+    const params = new URLSearchParams({
+      limit: String(PAGE_SIZE),
+      offset: String(append ? offset : 0),
+      portals: portal,
+    });
+    const q = (document.getElementById('q') as HTMLInputElement).value.trim();
+    const location = (document.getElementById('location') as HTMLInputElement).value.trim();
+    if (q) params.set('q', q);
+    if (location) params.set('location', location);
+
+    try {
+      const res = await fetch(`${API}/api/jobs?${params}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      if (!append) {
+        jobsEl.innerHTML = '';
+        offset = 0;
+        total = data.total || 0;
+      }
+
+      jobsEl.insertAdjacentHTML('beforeend', data.jobs.map(jobCard).join(''));
+      offset += data.jobs.length;
+
+      emptyEl.hidden = data.jobs.length > 0 || offset > 0;
+      loadMoreBtn.hidden = offset >= total;
+    } catch {
+      errorEl.hidden = false;
+    } finally {
+      statusEl.hidden = true;
+      loading = false;
+    }
+  }
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    fetchJobs(false);
+  });
+
+  loadMoreBtn.addEventListener('click', () => fetchJobs(true));
+  document.getElementById('retry')!.addEventListener('click', () => fetchJobs(false));
+
+  jobsEl.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest('.save-btn') as HTMLButtonElement | null;
+    if (!btn) return;
+    const key = btn.dataset.key!;
+    toggleSaved(key);
+    btn.classList.toggle('saved');
+    btn.textContent = btn.classList.contains('saved') ? '♥' : '♡';
+  });
+
+  fetchJobs(false);
+</script>
