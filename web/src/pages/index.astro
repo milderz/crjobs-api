@@ -90,7 +90,7 @@ import Base from '../layouts/Base.astro';
           <button class="save-btn ${saved}" data-key="${escapeHtml(key)}" aria-label="Guardar empleo" title="Guardar empleo">♡</button>
         </div>
         <div class="card-submeta">
-          <span class="company-name">${escapeHtml(job.company || job.portal)}</span>
+          <a class="company-name" href="/companies/${encodeURIComponent(job.portal)}">${escapeHtml(job.company || job.portal)}</a>
           ${posted ? `<span class="posted">Publicado ${posted}</span>` : ''}
         </div>
         <h3><a href="${detailUrl}">${escapeHtml(job.title)}</a></h3>
